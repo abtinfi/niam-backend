@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:15-alpine # می‌توانید از نسخه‌های دیگر هم استفاده کنید
+    container_name: my_postgres_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: ${DB_NAME}         # از فایل .env خوانده می‌شود
+      POSTGRES_USER: ${DB_USER}       # از فایل .env خوانده می‌شود
+      POSTGRES_PASSWORD: ${DB_PASSWORD} # از فایل .env خوانده می‌شود
+    # ports: # این بخش را فقط در صورت نیاز به دسترسی مستقیم به دیتابیس از خارج از داکر فعال کنید
+      # - "5433:5432" # پورت 5432 کانتینر به 5433 هاست map می‌شود
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: my_django_app
+    # اگر از entrypoint.sh استفاده می‌کنید، command در Dockerfile (یا اینجا) به عنوان آرگومان به entrypoint پاس داده می‌شود.
+    # command: python manage.py runserver 0.0.0.0:8000 # این خط اگر ENTRYPOINT در Dockerfile باشد، توسط آن اجرا می‌شود
+    volumes:
+      - .:/app          # Mount کردن کد برای live reload
+      - ./media:/app/media # Mount کردن پوشه media
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env            # خواندن متغیرهای محیطی از .env
+    depends_on:
+      - db              # سرویس web پس از سرویس db شروع به کار می‌کند
+
+volumes:
+  postgres_data: # تعریف named volume برای نگهداری دائمی داده‌های PostgreSQL
