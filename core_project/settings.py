@@ -25,18 +25,14 @@ load_dotenv()
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
-if not DEBUG: # یا به طور مستقیم اگر می‌خواهید برای داکر همیشه اینطور باشد
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your_actual_domain_in_production.com']
-    # اگر می‌خواهید از طریق نام سرویس داکر هم قابل دسترس باشد (مثلا برای ارتباط بین کانتینری)
-    # ALLOWED_HOSTS.append(os.getenv('WEB_HOST', 'localhost')) # WEB_HOST را در .env تعریف کنید
-else:
-    ALLOWED_HOSTS = [] # یا ['*'] برای توسعه راحت‌تر، اما برای پروداکشن خطرناک است
+DEBUG = True
+ALLOWED_HOSTS = ["*"]
+CORS_ALLOW_CREDENTIALS = True
+
 # Resend API Key
 RESEND_API_KEY = os.getenv('RESEND_API_KEY')
 DEFAULT_FROM_EMAIL_RESEND = os.getenv('YOUR_SENDING_EMAIL') 
 
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -53,7 +49,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'accounts',
     'file_uploader',
-    'drf_spectacular'
+    'drf_spectacular',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -107,6 +104,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # حتماً باید قبل از CommonMiddleware باشد
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'core_project.urls'
@@ -193,14 +192,12 @@ if os.getenv('USE_SQLITE', 'false').lower() == 'true':
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-            'NAME': os.getenv('DB_NAME'),
-            'USER': os.getenv('DB_USER'),
-            'PASSWORD': os.getenv('DB_PASSWORD'),
-            'HOST': os.getenv('DB_HOST'),
-            'PORT': os.getenv('DB_PORT', '5432'),
-        }
-    }
+
+
+
+CORS_ALLOWED_ORIGINS = [
+    "http://5.178.96.222",
+    "http://127.0.0.1:3000",
+]
+
+
