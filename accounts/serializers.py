@@ -5,29 +5,22 @@ from rest_framework import serializers
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    full_name = serializers.CharField(write_only=True, required=True)
+    full_name_display = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ('email', 'password', 'first_name', 'last_name')
+        fields = ('email', 'password', 'full_name', 'full_name_display')
         extra_kwargs = {
-            'first_name': {'required': False},
-            'last_name': {'required': False},
             'email': {'required': True}
         }
 
-    def validate(self, attrs):
-        # if attrs['password'] != attrs['password2']:
-        #     raise serializers.ValidationError({"password": "رمز عبور و تایید آن یکسان نیستند."}) # پیام فارسی
+    def get_full_name_display(self, obj):
+        return obj.first_name
 
-        # این اعتبارسنجی برای ثبت نام (create) صحیح است.
-        # اگر برای ویرایش (update) استفاده شود، باید چک شود که آیا ایمیل تغییر کرده است یا خیر.
-        # if self.instance and self.instance.email == attrs.get('email'):
-        # pass # ایمیل تغییر نکرده، نیازی به بررسی تکراری بودن نیست
-        # elif User.objects.filter(email__iexact=attrs.get('email')).exists():
-        # raise serializers.ValidationError({"email": "کاربری با این ایمیل قبلا ثبت نام کرده است."})
+    def validate(self, attrs):
         if not self.instance and User.objects.filter(email__iexact=attrs.get('email')).exists(): # فقط برای create
-             raise serializers.ValidationError({"email": "کاربری با این ایمیل قبلا ثبت نام کرده است."})
-        # اگر برای آپدیت هم می‌خواهید استفاده کنید و ایمیل قابل تغییر است:
+            raise serializers.ValidationError({"email": "کاربری با این ایمیل قبلا ثبت نام کرده است."})
         if self.instance and 'email' in attrs and self.instance.email != attrs.get('email'):
             if User.objects.filter(email__iexact=attrs.get('email')).exists():
                 raise serializers.ValidationError({"email": "کاربری با این ایمیل قبلا ثبت نام کرده است."})
@@ -35,14 +28,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # ایمیل به عنوان یوزرنیم استفاده شود
+        full_name = validated_data.get('full_name', "").strip()
+        # همه full_name را در first_name قرار می‌دهیم و last_name خالی می‌ماند
         user = User.objects.create_user(
             username=validated_data['email'],
             email=validated_data['email'],
             is_active=False
         )
         user.set_password(validated_data['password'])
-        user.first_name = validated_data.get('first_name', "")
-        user.last_name = validated_data.get('last_name', "")
+        user.first_name = full_name
+        user.last_name = ""
         user.save()
         return user
 

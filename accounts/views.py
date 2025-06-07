@@ -16,6 +16,52 @@ from .serializers import (
 from .email_utils import send_otp_email
 
 
+class ResendEmailVerificationOTPView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "ایمیل الزامی است."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(email__iexact=email, is_active=False)
+        except User.DoesNotExist:
+            # پیام عمومی برای جلوگیری از افشای وجود کاربر
+            return Response({"message": "اگر ایمیل شما در سیستم موجود باشد و هنوز تایید نشده باشد، کد تایید ارسال خواهد شد."}, status=status.HTTP_200_OK)
+
+        # غیرفعال کردن OTP های فعال قبلی برای تایید ایمیل همین کاربر
+        OTPSecret.objects.filter(
+            user=user,
+            purpose='email_verification',
+            is_used=False,
+            expires_at__gt=timezone.now()
+        ).update(expires_at=timezone.now())
+
+        otp_code = OTPSecret.generate_otp()
+        OTPSecret.objects.create(user=user, otp_code=otp_code, purpose='email_verification')
+
+        if send_otp_email(user.email, otp_code, user.username, purpose='email_verification'):
+            return Response({"message": "اگر ایمیل شما در سیستم موجود باشد و هنوز تایید نشده باشد، کد تایید ارسال خواهد شد."}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "خطا در ارسال ایمیل. لطفا بعدا تلاش کنید."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+# accounts/views.py
+from django.contrib.auth.models import User
+from django.utils import timezone
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import OTPSecret
+from .serializers import (
+    EmailVerificationSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    UserSerializer,
+)
+from .email_utils import send_otp_email
+
+
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
