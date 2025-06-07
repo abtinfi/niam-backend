@@ -18,11 +18,11 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
             try:
                 user = User.objects.get(email__iexact=email)
             except User.DoesNotExist:
-                raise serializers.ValidationError({'email': 'کاربری با این ایمیل یافت نشد.'})
+                raise serializers.ValidationError({'detail': 'کاربری با این ایمیل یافت نشد.'})
             if not user.check_password(password):
-                raise serializers.ValidationError({'password': 'رمز عبور اشتباه است.'})
+                raise serializers.ValidationError({'detail': 'رمز عبور اشتباه است.'})
             if not user.is_active:
-                raise serializers.ValidationError({'email': 'حساب کاربری شما فعال نیست.'})
+                raise serializers.ValidationError({'detail': 'حساب کاربری شما فعال نیست.'})
             self.user = user
         else:
             raise serializers.ValidationError('ایمیل و رمز عبور الزامی است.')
