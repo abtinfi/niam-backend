@@ -3,21 +3,24 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 # ایمپورت‌های simplejwt برای تعریف دستی
+
+# استفاده از ویوی سفارشی توکن مبتنی بر ایمیل
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
     TokenRefreshView,
     TokenVerifyView, # اگر نیاز دارید
 )
+from accounts.custom_jwt import EmailTokenObtainPairView
 
-from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/', EmailTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'), # در صورت نیاز اضافه کنید
+    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 
     path('api/accounts/', include('accounts.urls')),
     path('api/files/', include('file_uploader.urls')),

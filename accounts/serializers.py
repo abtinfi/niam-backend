@@ -5,11 +5,10 @@ from rest_framework import serializers
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True, label="Confirm Password")
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name')
+        fields = ('email', 'password', 'first_name', 'last_name')
         extra_kwargs = {
             'first_name': {'required': False},
             'last_name': {'required': False},
@@ -17,8 +16,8 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "رمز عبور و تایید آن یکسان نیستند."}) # پیام فارسی
+        # if attrs['password'] != attrs['password2']:
+        #     raise serializers.ValidationError({"password": "رمز عبور و تایید آن یکسان نیستند."}) # پیام فارسی
 
         # این اعتبارسنجی برای ثبت نام (create) صحیح است.
         # اگر برای ویرایش (update) استفاده شود، باید چک شود که آیا ایمیل تغییر کرده است یا خیر.
@@ -35,16 +34,15 @@ class UserSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        # ایمیل به عنوان یوزرنیم استفاده شود
         user = User.objects.create_user(
-            username=validated_data['username'],
+            username=validated_data['email'],
             email=validated_data['email'],
-            is_active=False  # کاربر به صورت غیرفعال ایجاد می‌شود
+            is_active=False
         )
         user.set_password(validated_data['password'])
-
-        user.first_name = validated_data.get('first_name', "") # استفاده از .get برای جلوگیری از KeyError
-        user.last_name = validated_data.get('last_name', "")  # استفاده از .get
-
+        user.first_name = validated_data.get('first_name', "")
+        user.last_name = validated_data.get('last_name', "")
         user.save()
         return user
 

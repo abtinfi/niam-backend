@@ -87,7 +87,6 @@ class EmailVerifyView(APIView):
             user_data = UserSerializer(user, context=self.get_serializer_context()).data
             # اطمینان از عدم بازگشت فیلدهای حساس (اگرچه UserSerializer باید این را مدیریت کند)
             user_data.pop('password', None)
-            user_data.pop('password2', None)
 
             return Response({
                 "message": "ایمیل شما با موفقیت تایید شد. حساب شما فعال است.",
