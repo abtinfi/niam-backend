@@ -25,3 +25,4 @@ gunicorn
 whitenoise
 drf-spectacular
 django-cors-headers
+matplotlib
